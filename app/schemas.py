@@ -23,3 +23,30 @@ class RoutineResponse(BaseModel):
     description: str
     difficulty: str
     
+class ExerciseCreate(BaseModel):
+    name: str
+    muscle_group: str
+    equipment: str
+    
+class ExerciseResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
+    name: str
+    muscle_group: str
+    equipment: str
+
+class RoutineExerciseCreate(BaseModel):
+    exercise_id: int
+    sets: int
+    reps: int
+    rest_seconds: int
+    exercise_order: int
+    
+class RoutineExerciseResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
+    exercise_id: int
+    sets: int
+    reps: int
+    rest_seconds: int
+    exercise_order: int

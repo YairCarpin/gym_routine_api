@@ -3,7 +3,11 @@ from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from app.database import engine, Base, SessionLocal
 from app.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from app import models
-from app.schemas import UserCreate, UserResponse, RoutineCreate, RoutineResponse
+from app.schemas import (
+    UserCreate, UserResponse, RoutineCreate,
+    RoutineResponse, ExerciseCreate, ExerciseResponse,
+    RoutineExerciseCreate, RoutineExerciseResponse
+)
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from app.utils.security import hash_password, verify_password
@@ -55,7 +59,10 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 async def home():
     return {"message": "Api running"}
 
-@app.post("/users", response_model=UserResponse)
+@app.post(
+    "/users",
+    response_model=UserResponse
+)
 async def create_user(
     user: UserCreate,
     db: Session = Depends(get_db)
@@ -103,11 +110,17 @@ async def login(
         "token_type": "bearer"
     }
     
-@app.get("/me", response_model=UserResponse)
+@app.get(
+    "/me",
+    response_model=UserResponse
+)
 async def me(current_user: models.User = Depends(get_current_user)):
     return current_user
 
-@app.post("/routines", response_model=RoutineResponse)
+@app.post(
+    "/routines",
+    response_model=RoutineResponse
+)
 async def routines(
     routine: RoutineCreate,
     current_user: models.User = Depends(get_current_user),
@@ -126,17 +139,25 @@ async def routines(
     
     return new_routine
 
-@app.get("/routines", response_model=list[RoutineResponse])
+@app.get(
+    "/routines",
+    response_model=list[RoutineResponse]
+)
 async def get_routines(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    stmt = select(models.Routine).where(models.Routine.user_id == current_user.id)
+    stmt = select(models.Routine).where(
+        models.Routine.user_id == current_user.id
+    )
     routines_db = db.scalars(stmt).all()
     
     return routines_db
 
-@app.get("/routines/{routine_id}", response_model=RoutineResponse)
+@app.get(
+    "/routines/{routine_id}",
+    response_model=RoutineResponse
+)
 async def return_routine(
     routine_id: int,
     db: Session = Depends(get_db),
@@ -157,7 +178,10 @@ async def return_routine(
     
     return routine_db
     
-@app.put("/routines/{routine_id}", response_model=RoutineResponse)
+@app.put(
+    "/routines/{routine_id}",
+    response_model=RoutineResponse
+)
 async def modify_routine(
     routine: RoutineCreate,
     routine_id: int,
@@ -185,4 +209,132 @@ async def modify_routine(
     db.refresh(routine_db)
     return routine_db
     
+@app.delete(
+    "/routines/{routine_id}",
+    status_code=status.HTTP_204_NO_CONTENT
+)
+async def delete_routine(
+    routine_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
     
+    stmt = select(models.Routine).where(
+        models.Routine.id == routine_id,
+        models.Routine.user_id == current_user.id           
+    )
+        
+    routine_db = db.execute(stmt).scalar_one_or_none()
+    
+    if routine_db == None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="rutina no encontrada"
+        )
+    
+    db.delete(routine_db)
+    
+    db.commit()
+
+@app.post(
+    "/exercises",
+    response_model=ExerciseResponse
+)
+async def add_exercise(
+    exercise: ExerciseCreate,
+    db: Session = Depends(get_db)
+):
+    new_exercise = models.Exercise(
+        name=exercise.name,
+        muscle_group=exercise.muscle_group,
+        equipment=exercise.equipment
+    )
+    
+    db.add(new_exercise)
+    db.commit()
+    db.refresh(new_exercise)
+    
+    return new_exercise
+
+@app.get(
+    "/exercises",
+    response_model=list[ExerciseResponse]
+)
+async def get_exercises(db: Session = Depends(get_db)):
+    
+    stmt = select(models.Exercise)
+    exercises_db = db.scalars(stmt).all()
+    
+    return exercises_db
+
+@app.get(
+    "/exercises/{exercise_id}",
+    response_model=ExerciseResponse
+)
+async def return_exercise(
+    exercise_id: int,
+    db: Session = Depends(get_db)
+):
+    stmt = select(models.Exercise).where(
+        models.Exercise.id == exercise_id
+    )
+    
+    exercise_db = db.execute(stmt).scalar_one_or_none()
+    
+    if exercise_db == None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="ejercicio no encontrado"
+        )
+        
+    return exercise_db
+
+@app.post(
+    "/routines/{routine_id}/exercises",
+    response_model=RoutineExerciseResponse
+)
+async def add_exercise_to_routine(
+    routine_id: int,
+    routine_exercise: RoutineExerciseCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    stmt = select(models.Routine).where(
+        models.Routine.id == routine_id,
+        models.Routine.user_id == current_user.id
+    )
+    
+    routine_db = db.execute(stmt).scalar_one_or_none()
+        
+    if routine_db == None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="rutina no encontrada"
+        )
+        
+    stmt_exercise = select(models.Exercise).where(
+        models.Exercise.id == routine_exercise.exercise_id
+    )
+    
+    exercise_db = db.execute(stmt_exercise).scalar_one_or_none()
+        
+    if exercise_db == None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="ejercicio no encontrado"
+        )
+    
+    new_routine_exercise = models.RoutineExercise(
+        routine_id=routine_id,
+        exercise_id=routine_exercise.exercise_id,
+        sets=routine_exercise.sets,
+        reps=routine_exercise.reps,
+        rest_seconds=routine_exercise.rest_seconds,
+        exercise_order=routine_exercise.exercise_order
+    )
+    
+    db.add(new_routine_exercise)
+    db.commit()
+    db.refresh(new_routine_exercise)
+    
+    return new_routine_exercise
