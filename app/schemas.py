@@ -50,3 +50,12 @@ class RoutineExerciseResponse(BaseModel):
     reps: int
     rest_seconds: int
     exercise_order: int
+    
+class RoutineExerciseDetailResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
+    exercise: ExerciseResponse
+    sets: int
+    reps: int
+    rest_seconds: int
+    exercise_order: int
