@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, ConfigDict
+from pydantic import BaseModel, EmailStr, ConfigDict, Field
 
 class UserCreate(BaseModel):
     name: str
@@ -37,10 +37,10 @@ class ExerciseResponse(BaseModel):
 
 class RoutineExerciseCreate(BaseModel):
     exercise_id: int
-    sets: int
-    reps: int
-    rest_seconds: int
-    exercise_order: int
+    sets: int = Field(gt=0)
+    reps: int = Field(gt=0)
+    rest_seconds: int = Field(ge=0)
+    exercise_order: int = Field(gt=0)
     
 class RoutineExerciseResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
