@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr, ConfigDict, Field
+from datetime import datetime
 
 class UserCreate(BaseModel):
     name: str
@@ -59,3 +60,16 @@ class RoutineExerciseDetailResponse(BaseModel):
     reps: int
     rest_seconds: int
     exercise_order: int
+    
+class WorkoutSessionCreate(BaseModel):
+    routine_id: int
+    notes: str | None = None
+    
+class WorkoutSessionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: int
+    routine_id: int
+    started_at: datetime
+    finished_at: datetime | None
+    notes: str | None

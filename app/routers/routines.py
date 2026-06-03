@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select
 from app.schemas import (
     RoutineCreate, RoutineResponse, RoutineExerciseCreate,
-    RoutineExerciseResponse, RoutineExerciseDetailResponse
+    RoutineExerciseResponse, RoutineExerciseDetailResponse,
 )
 from app.database import get_db
 from app.dependencies.auth import get_current_user
@@ -325,3 +325,9 @@ async def update_routine_exercise(
     db.refresh(routine_exercise_db)
     
     return routine_exercise_db
+        
+    
+    
+    
+    
+    
