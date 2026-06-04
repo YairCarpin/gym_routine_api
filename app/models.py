@@ -80,7 +80,7 @@ class WorkoutSession(Base):
     
     user = relationship("User", back_populates="workout_sessions")
     routine = relationship("Routine", back_populates="workout_sessions")
-    workout_exercises = relationship("WorkoutExercise", back_populates="workout_sessions")
+    workout_exercises = relationship("WorkoutExercise", back_populates="workout_session")
 
 class WorkoutExercise(Base):
     __tablename__ = "workout_exercises"
@@ -93,6 +93,6 @@ class WorkoutExercise(Base):
     weight: Mapped[int] = mapped_column(Integer)
     notes: Mapped[str] = mapped_column(String(200), nullable=True)
      
-    workout_sessions = relationship("WorkoutSession", back_populates="workout_exercises")   
+    workout_session = relationship("WorkoutSession", back_populates="workout_exercises")   
     exercise = relationship("Exercise", back_populates="workout_exercises")
     

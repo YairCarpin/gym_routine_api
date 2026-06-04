@@ -73,3 +73,44 @@ class WorkoutSessionResponse(BaseModel):
     started_at: datetime
     finished_at: datetime | None
     notes: str | None
+    
+class WorkoutExerciseCreate(BaseModel):
+    exercise_id: int
+    sets_completed: int
+    reps_completed: int
+    weight: int
+    notes: str | None = None
+    
+class WorkoutExerciseResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
+    exercise_id: int
+    sets_completed: int
+    reps_completed: int
+    weight: int
+    notes: str | None
+    
+class WorkoutExerciseDetailResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
+    exercise: ExerciseResponse
+    sets_completed: int
+    reps_completed: int
+    weight: int
+    notes: str | None
+    
+class WorkoutSessionDetailResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: int
+    routine_id: int
+    started_at: datetime
+    finished_at: datetime | None
+    notes: str | None
+    workout_exercises: list[WorkoutExerciseDetailResponse]
+    
+class WorkoutExerciseUpdate(BaseModel):
+    sets_completed: int
+    reps_completed: int
+    weight: int
+    notes: str | None = None
