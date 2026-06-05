@@ -21,7 +21,7 @@ async def add_exercise(
     new_exercise = models.Exercise(
         name=exercise.name,
         muscle_group=exercise.muscle_group,
-        equipment=exercise.equipment
+        equipment=exercise.equipment,
         instructions=exercise.instructions
     )
     
