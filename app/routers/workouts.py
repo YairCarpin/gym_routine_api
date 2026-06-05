@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 from app.schemas import (
     WorkoutSessionCreate, WorkoutSessionResponse,
     WorkoutExerciseCreate, WorkoutExerciseResponse,
     WorkoutSessionDetailResponse, WorkoutExerciseDetailResponse,
-    WorkoutExerciseUpdate
+    WorkoutExerciseUpdate, WorkoutStatsResponse
 )
 from app.database import get_db
 from app.dependencies.auth import get_current_user
@@ -197,6 +197,70 @@ async def exercises (
     db.refresh(new_workout_exercise)
     
     return new_workout_exercise
+
+@router.get(
+    "/stats",
+    response_model=WorkoutStatsResponse
+)
+async def stats(
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    stmt = select(func.count()).select_from(models.WorkoutSession).where(
+        models.WorkoutSession.user_id == current_user.id
+    )
+    
+    total_workouts = db.execute(stmt).scalar_one()
+    
+    stmt_exercises = (
+        select(func.count())
+        .select_from(models.WorkoutExercise)
+        .join(models.WorkoutSession)
+        .where(models.WorkoutSession.user_id == current_user.id)
+    )
+    
+    total_exercises = db.execute(stmt_exercises).scalar_one()
+    
+    stmt_avg = select(
+        func.avg(
+            func.extract(
+                "epoch",
+                models.WorkoutSession.finished_at -
+                models.WorkoutSession.started_at
+            ) / 60
+        )
+    ).where(
+        models.WorkoutSession.user_id == current_user.id,
+        models.WorkoutSession.finished_at.is_not(None)
+    )
+    
+    average_duration = db.execute(stmt_avg).scalar() or 0
+    
+    stmt_weight = (
+        select(
+            func.coalesce(
+                func.sum(
+                    models.WorkoutExercise.sets_completed
+                    * models.WorkoutExercise.reps_completed
+                    * models.WorkoutExercise.weight
+                ),
+                0
+            )
+        )
+        .select_from(models.WorkoutExercise)
+        .join(models.WorkoutSession)
+        .where(models.WorkoutSession.user_id == current_user.id)
+    )
+    
+    total_weight_lifted = db.execute(stmt_weight).scalar_one()
+    
+    return {
+        "total_workouts": total_workouts,
+        "total_exercises": total_exercises,
+        "average_duration_minutes": average_duration,
+        "total_weight_lifted": total_weight_lifted
+    }
+    
 
 @router.get(
     "/active",

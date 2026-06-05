@@ -22,6 +22,7 @@ async def add_exercise(
         name=exercise.name,
         muscle_group=exercise.muscle_group,
         equipment=exercise.equipment
+        instructions=exercise.instructions
     )
     
     db.add(new_exercise)

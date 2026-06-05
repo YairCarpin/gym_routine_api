@@ -28,6 +28,7 @@ class ExerciseCreate(BaseModel):
     name: str
     muscle_group: str
     equipment: str
+    instructions: str | None = None
     
 class ExerciseResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -35,6 +36,7 @@ class ExerciseResponse(BaseModel):
     name: str
     muscle_group: str
     equipment: str
+    instructions: str | None
 
 class RoutineExerciseCreate(BaseModel):
     exercise_id: int
@@ -114,3 +116,9 @@ class WorkoutExerciseUpdate(BaseModel):
     reps_completed: int
     weight: int
     notes: str | None = None
+    
+class WorkoutStatsResponse(BaseModel):
+    total_workouts: int
+    total_exercises: int
+    average_duration_minutes: float
+    total_weight_lifted: int

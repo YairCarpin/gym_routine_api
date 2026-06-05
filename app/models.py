@@ -40,6 +40,7 @@ class Exercise(Base):
     name: Mapped[str] = mapped_column(String(80), nullable=False)
     muscle_group: Mapped[str] = mapped_column(String(50))
     equipment: Mapped[str] = mapped_column(String(100))
+    instructions: Mapped[str | None] = mapped_column(String(250), nullable=True) 
     
     routine_exercises = relationship("RoutineExercise", back_populates="exercise")
     workout_exercises = relationship("WorkoutExercise", back_populates="exercise")
@@ -54,7 +55,7 @@ class RoutineExercise(Base):
     sets: Mapped[int] = mapped_column(Integer)
     reps: Mapped[int] = mapped_column(Integer)
     rest_seconds: Mapped[int] = mapped_column(Integer)
-    exercise_order: Mapped[int] = mapped_column(Integer)   
+    exercise_order: Mapped[int] = mapped_column(Integer)
     
     exercise = relationship("Exercise", back_populates="routine_exercises")
     routine = relationship("Routine", back_populates="routine_exercises")
