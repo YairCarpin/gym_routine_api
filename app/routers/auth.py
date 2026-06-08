@@ -24,6 +24,18 @@ async def create_user(
     user: UserCreate,
     db: Session = Depends(get_db)
 ):
+    stmt = select(models.User).where(
+        models.User.email == user.email
+    )
+    
+    user_db = db.execute(stmt).scalar_one_or_none()
+    
+    if user_db:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="El correo electrónico ya está registrado"
+        )
+    
     new_user = models.User(
         name=user.name,
         email=user.email,

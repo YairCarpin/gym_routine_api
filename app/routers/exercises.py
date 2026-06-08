@@ -35,9 +35,17 @@ async def add_exercise(
     "/",
     response_model=list[ExerciseResponse]
 )
-async def get_exercises(db: Session = Depends(get_db)):
+async def get_exercises(
+    skip: int = 0,
+    limit: int = 10,
+    db: Session = Depends(get_db)
+):
     
-    stmt = select(models.Exercise)
+    stmt = (
+        select(models.Exercise)
+        .offset(skip)
+        .limit(limit)
+    )
     exercises_db = db.scalars(stmt).all()
     
     return exercises_db

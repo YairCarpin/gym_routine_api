@@ -105,11 +105,16 @@ async def finish_workout(
     response_model=list[WorkoutSessionResponse]
 )
 async def workouts(
+    skip: int = 0,
+    limit: int = 10,
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    stmt = select(models.WorkoutSession).where(
-        models.WorkoutSession.user_id == current_user.id,
+    stmt = (
+        select(models.WorkoutSession)
+        .where(models.WorkoutSession.user_id == current_user.id,)
+        .offset(skip)
+        .limit(limit)
     )
     
     workouts_db = db.scalars(stmt).all()

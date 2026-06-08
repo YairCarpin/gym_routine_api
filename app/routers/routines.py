@@ -41,11 +41,16 @@ async def routines(
     response_model=list[RoutineResponse]
 )
 async def get_routines(
+    skip: int = 0,
+    limit: int = 10,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    stmt = select(models.Routine).where(
-        models.Routine.user_id == current_user.id
+    stmt = (
+        select(models.Routine)
+        .where(models.Routine.user_id == current_user.id)
+        .offset(skip)
+        .limit(limit)
     )
     routines_db = db.scalars(stmt).all()
     
