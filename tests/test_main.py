@@ -80,10 +80,20 @@ def test_register_duplicate_email():
     assert response.status_code == 409
     
 def test_login_user():
+    email = f"login_{uuid.uuid4()}@test.com"
+
+    client.post(
+        "/auth/register",
+        json={
+            "name": "Yair",
+            "email": email,
+            "password": "123456"
+        }
+    )
     response = client.post(
         "/auth/login",
         data={
-            "username": "yair@test.com",
+            "username": email,
             "password": "123456"
         }
     )
