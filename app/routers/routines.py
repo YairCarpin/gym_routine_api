@@ -16,7 +16,8 @@ router = APIRouter(
 
 @router.post(
     "/",
-    response_model=RoutineResponse
+    response_model=RoutineResponse,
+    status_code=status.HTTP_201_CREATED
 )
 async def routines(
     routine: RoutineCreate,

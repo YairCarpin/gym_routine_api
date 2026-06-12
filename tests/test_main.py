@@ -36,7 +36,21 @@ def created_routine(auth_token):
         }
     )
     
-    return response.json()
+    return response
+
+@pytest.fixture
+def created_exercise():
+    response = client.post(
+        "/exercises",
+        json={
+            "name": "press banca",
+            "muscle_group": "pecho",
+            "equipment": "barra, banco",
+            "instructions": "realizar con peso moderado"
+        }
+    )
+    
+    return response
 
 def test_app_runs():
     response = client.get("/docs")
@@ -144,9 +158,12 @@ def test_me_without_token():
     
     assert response.status_code == 401
     
-def test_create_routine(auth_token, created_routine):
-    
-    assert created_routine["name"] == "Push Day"
+def test_create_routine(created_routine):
+    assert created_routine.status_code == 201
+    assert created_routine.json()["id"] > 0
+    assert created_routine.json()["name"] == "Push Day"
+    assert created_routine.json()["description"] == "rutina de empuje"
+    assert created_routine.json()["difficulty"] == "intermedia"
     
 def test_create_routine_without_token():
     response = client.post(
@@ -173,7 +190,7 @@ def test_get_routines(auth_token, created_routine):
     assert response.json()[0]["name"] == "Push Day"
     
 def test_get_routines_id(auth_token, created_routine):
-    routine_id = created_routine["id"]
+    routine_id = created_routine.json()["id"]
     
     response = client.get(
         f"/routines/{routine_id}",
@@ -186,7 +203,7 @@ def test_get_routines_id(auth_token, created_routine):
     assert response.json()["name"] == "Push Day"
     
 def test_put_routines_id(auth_token, created_routine):
-    routine_id = created_routine["id"]
+    routine_id = created_routine.json()["id"]
     
     response = client.put(
         f"/routines/{routine_id}",
@@ -206,7 +223,7 @@ def test_put_routines_id(auth_token, created_routine):
     assert response.json()["id"] == routine_id
     
 def test_delete_routine(auth_token, created_routine):
-    routine_id = created_routine["id"]
+    routine_id = created_routine.json()["id"]
     
     response_delete = client.delete(
         f"/routines/{routine_id}",
@@ -222,6 +239,90 @@ def test_delete_routine(auth_token, created_routine):
         headers={
             "Authorization": f"Bearer {auth_token}"
         }
+    )
+    
+    assert response.status_code == 404
+    
+def test_create_exercise(created_exercise):
+    assert created_exercise.status_code == 201
+    assert created_exercise.json()["name"] == "press banca"
+    assert created_exercise.json()["muscle_group"] == "pecho"
+    assert created_exercise.json()["equipment"] == "barra, banco"
+    assert created_exercise.json()["instructions"] == "realizar con peso moderado"
+    
+def test_get_exercises(created_exercise):
+    exercise_id = created_exercise.json()["id"]
+    response = client.get(
+        "/exercises"
+    )
+    assert response.status_code == 200
+    assert any(
+        exercise["id"] == exercise_id
+        for exercise in response.json()
+    )
+    assert response.json()[0]["name"] == "press banca"
+    
+def test_get_exercise_id(created_exercise):
+    exercise_id = created_exercise.json()["id"]
+    
+    response = client.get(
+        f"/exercises/{exercise_id}"
+    )
+    assert response.status_code == 200
+    assert response.json()["name"] == "press banca"
+    
+def test_put_exercise_id(created_exercise):
+    exercise_id = created_exercise.json()["id"]
+    
+    response = client.put(
+        f"/exercises/{exercise_id}",
+        json={
+            "name": "press banca",
+            "muscle_group": "pecho",
+            "equipment": "barra, mancuernas, banco",
+            "instructions": "realizar con peso moderado"
+        }
+    )
+    assert response.status_code == 200
+    assert response.json()["id"] == exercise_id
+    assert response.json()["name"] == "press banca"
+    assert response.json()["muscle_group"] == "pecho"
+    assert response.json()["equipment"] == "barra, mancuernas, banco"
+    assert response.json()["instructions"] ==  "realizar con peso moderado"
+    
+def test_delete_exercise_id(created_exercise):
+    exercise_id = created_exercise.json()["id"]
+    
+    response = client.delete(
+        f"/exercises/{exercise_id}"
+    )
+    response_get = client.get(
+        f"/exercises/{exercise_id}"
+    )
+    assert response.status_code == 204
+    assert response_get.status_code == 404
+       
+def test_get_exercise_not_found():
+    response = client.get(
+        "/exercises/999999"
+    )
+    assert response.status_code == 404
+    
+def test_put_exercise_not_found():
+    response = client.put(
+        "/exercises/999999",
+        json={
+            "name": "press banca",
+            "muscle_group": "pecho",
+            "equipment": "barra, mancuernas, banco",
+            "instructions": "realizar con peso moderado"
+        }
+    )
+    assert response.status_code == 404
+
+def test_delete_exercise_not_found():
+    response = client.delete(
+        "/exercises/999999"
     )
     
     assert response.status_code == 404

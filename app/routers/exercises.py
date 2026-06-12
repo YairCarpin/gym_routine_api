@@ -12,7 +12,8 @@ router = APIRouter(
 
 @router.post(
     "/",
-    response_model=ExerciseResponse
+    response_model=ExerciseResponse,
+    status_code=status.HTTP_201_CREATED
 )
 async def add_exercise(
     exercise: ExerciseCreate,
@@ -71,3 +72,57 @@ async def return_exercise(
         )
         
     return exercise_db
+
+@router.put(
+    "/{exercise_id}",
+    response_model=ExerciseResponse
+)
+async def put_exercise(
+    exercise_id: int,
+    exercise: ExerciseCreate,
+    db: Session = Depends(get_db)
+):
+    stmt = select(models.Exercise).where(
+        models.Exercise.id == exercise_id
+    )
+    
+    exercise_db = db.execute(stmt).scalar_one_or_none()
+    
+    if exercise_db == None:
+        raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="ejercicio no encontrado"
+    )
+    
+    exercise_db.name=exercise.name
+    exercise_db.muscle_group=exercise.muscle_group
+    exercise_db.equipment=exercise.equipment
+    exercise_db.instructions=exercise.instructions
+    
+    db.commit()
+    db.refresh(exercise_db)
+    
+    return exercise_db
+    
+@router.delete(
+    "/{exercise_id}",
+    status_code=status.HTTP_204_NO_CONTENT
+)
+async def delete_exercise(
+    exercise_id: int,
+    db: Session = Depends(get_db)
+):
+    stmt = select(models.Exercise).where(
+        models.Exercise.id == exercise_id
+    )
+    
+    exercise_db = db.execute(stmt).scalar_one_or_none()
+    
+    if exercise_db == None:
+        raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="ejercicio no encontrado"
+    )
+    
+    db.delete(exercise_db)
+    db.commit()
