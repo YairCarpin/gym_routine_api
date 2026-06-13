@@ -50,6 +50,8 @@ class RoutineExerciseCreate(BaseModel):
 class RoutineExerciseResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     
+    id: int
+    routine_id: int
     exercise_id: int
     sets: int
     reps: int
@@ -59,6 +61,8 @@ class RoutineExerciseResponse(BaseModel):
 class RoutineExerciseDetailResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     
+    id: int
+    routine_id: int
     exercise: ExerciseResponse
     sets: int
     reps: int

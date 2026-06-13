@@ -141,7 +141,8 @@ async def delete_routine(
 
 @router.post(
     "/{routine_id}/exercises",
-    response_model=RoutineExerciseResponse
+    response_model=RoutineExerciseResponse,
+    status_code=status.HTTP_201_CREATED
 )
 async def add_exercise_to_routine(
     routine_id: int,
@@ -231,6 +232,43 @@ async def exercises_routine(
     routine_exercises_db = db.scalars(stmt_routine_exercise).all()
     
     return routine_exercises_db
+
+@router.get(
+    "/{routine_id}/exercises/{routine_exercise_id}"
+)
+async def get_exercise_routine_id(
+    routine_id: int,
+    routine_exercise_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    stmt = select(models.Routine).where(
+        models.Routine.id == routine_id,
+        models.Routine.user_id == current_user.id
+    )
+    
+    routine_db = db.execute(stmt).scalar_one_or_none()
+    
+    if routine_db == None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="rutina no encontrada"
+        )
+        
+    stmt_routine_exercise = select(models.RoutineExercise).where(
+        models.RoutineExercise.routine_id == routine_id,
+        models.RoutineExercise.id == routine_exercise_id,
+    )
+    
+    routine_exercise_db = db.execute(stmt_routine_exercise).scalar_one_or_none()
+    
+    if routine_exercise_db == None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="ejercicio no encontrado"
+        )
+    
+    return routine_exercise_db
 
 @router.delete(
     "/{routine_id}/exercises/{routine_exercise_id}",
