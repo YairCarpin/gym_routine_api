@@ -92,6 +92,8 @@ class WorkoutExerciseCreate(BaseModel):
 class WorkoutExerciseResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     
+    id: int
+    workout_session_id: int
     exercise_id: int
     sets_completed: int
     reps_completed: int

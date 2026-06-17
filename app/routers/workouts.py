@@ -20,7 +20,8 @@ router = APIRouter(
 
 @router.post(
     "/",
-    response_model=WorkoutSessionResponse
+    response_model=WorkoutSessionResponse,
+    status_code=status.HTTP_201_CREATED
 )
 async def verify_routine(
     workout_session: WorkoutSessionCreate,
@@ -123,7 +124,8 @@ async def workouts(
 
 @router.post(
     "/{workout_id}/exercises",
-    response_model=WorkoutExerciseResponse
+    response_model=WorkoutExerciseResponse,
+    status_code=status.HTTP_201_CREATED
 )
 async def exercises (
     workout_id: int,
@@ -309,7 +311,7 @@ async def get_workout_detail(
     if workout_db == None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="entrnamiento no encontrado"
+            detail="entrenamiento no encontrado"
         )
     
     return workout_db
@@ -344,6 +346,43 @@ async def workout_exercises(
     
     return workout_exercise_db
 
+@router.get(
+    "/{workout_id}/exercises/{workout_exercise_id}"
+)
+async def get_workout_exercise_id(
+    workout_id: int,
+    workout_exercise_id: int,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    stmt = select(models.WorkoutSession).where(
+        models.WorkoutSession.user_id == current_user.id,
+        models.WorkoutSession.id == workout_id
+    )
+    
+    workout_db = db.execute(stmt).scalar_one_or_none()
+    
+    if workout_db == None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="entrenamiento no encontrado"
+        )
+        
+    stmt_exercise = select(models.WorkoutExercise).where(
+        models.WorkoutExercise.workout_session_id == workout_db.id,
+        models.WorkoutExercise.id == workout_exercise_id
+    )
+    
+    workout_exercise_db = db.execute(stmt_exercise).scalar_one_or_none()
+    
+    if workout_exercise_db == None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="ejercicio no encontrado"
+        )
+    
+    return workout_exercise_db
+
 @router.delete(
     "/{workout_id}/exercises/{workout_exercise_id}",
     status_code=status.HTTP_204_NO_CONTENT
@@ -364,7 +403,7 @@ async def delete_exercise(
     if workout_db == None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="entrenamieto no encontrado"
+            detail="entrenamiento no encontrado"
         )
         
     stmt_exercise = select(models.WorkoutExercise).where(
